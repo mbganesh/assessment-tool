@@ -1,6 +1,6 @@
 import { Button, Card, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/system";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import InputAdornment from "@mui/material/InputAdornment";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -58,6 +58,13 @@ export default function LoginPage() {
         alert('incorrect username or password')
       }
   }
+
+  console.log('im redner');
+
+  useEffect( () => {
+    console.log('im in useEff');
+  } , [])
+
 
   return (
     <div>

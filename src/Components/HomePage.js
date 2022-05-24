@@ -15,9 +15,11 @@ import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
-
 import { useLocation, useNavigate } from "react-router-dom";
 import { Colors } from "../constants";
+
+import Swal from "sweetalert2";
+
 import JSONData from "../constants/JSONData";
 
 const RootDiv = styled("div")(({ theme }) => ({
@@ -49,6 +51,7 @@ export default function HomePage() {
 
   const handleRadioChange = (event) => {
     setValue(event.target.value);
+    console.log(event.target.value ,  'xxxxxxx');
   };
 
   const handleQuestionChange = (i) => {
@@ -57,15 +60,11 @@ export default function HomePage() {
 
   const correctAnswer = data[position][`ans`];
 
-  console.log(value);
-  console.log(correctAnswer);
-
   const scoreAdd = () => {
     value === correctAnswer ? setscore(score + 1) : setscore(score + 0);
   };
 
   useEffect(() => {
-    console.log(position, data.length);
     if (position === data.length) {
       setposition(0);
       alert("You visit all the stuff");
@@ -92,6 +91,28 @@ export default function HomePage() {
         setData(JSONData.MATHS);
     }
   };
+
+
+  // logout:
+  const handleLogOut = () => {
+    Swal.fire({
+      title: 'Log Out',
+      text: "Are you sure you want to logout?",
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, Logout.'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire(
+          'Logout',
+          'Logout successfully',
+          'success'
+        )
+        navigate(-1)
+      }
+    })
+  }
 
   const QNA = data;
   const [Analytics, setAnalytics] = useState(autoGen(QNA.length));
@@ -129,30 +150,52 @@ export default function HomePage() {
     return arr;
   }
 
-  console.log(Analytics);
-
   useEffect(() => {
-    console.log(location.state);
+
+    console.log('Home Page Data : ');
+    console.table(location.state);
   }, []);
 
-  useEffect(() => {
-    if (countDown < 0) {
-      alert("expired");
-      setCountDown(0);
-    }
-  }, [countDown]);
+  // For Timer:
+
+  // useEffect(() => {
+  //   if (countDown < 0) {
+  //     alert("expired");
+  //     navigate(-1)
+  //     setCountDown(0);
+  //   }
+  // }, [countDown]);
 
 
-  useEffect(() => {
-    let timerId;
-      setCountDown(60 * 30);
-      timerId = setInterval(() => {
-        setCountDown((countDown) => countDown - 1);
-      }, 1000);
+  // useEffect(() => {
+  //   let timerId;
+  //     setCountDown(60 * 30);
+  //     timerId = setInterval(() => {
+  //       setCountDown((countDown) => countDown - 1);
+  //     }, 1000);
    
-    return () => clearInterval(timerId);
-  }, []);
+  //   return () => clearInterval(timerId);
+  // }, []);
 
+
+
+
+  // refresh:
+
+  // useEffect(() => {
+  //   window.addEventListener("beforeunload", alertUser);
+  //   return () => {
+  //     window.removeEventListener("beforeunload", alertUser);
+  //   };
+  // }, []);
+
+  // const alertUser = (e) => {
+  //   e.preventDefault();
+  //   e.returnValue = "";
+  //   navigate(-1)
+  // };
+
+  
   return (
     <div>
       <AppBar position="sticky" sx={{ height: "5vh" }}>
@@ -173,7 +216,7 @@ export default function HomePage() {
               border: "1px solid #fff",
               "&:hover": { border: "1px solid #fff" },
             }}
-            onClick={() => navigate(-1)}
+            onClick={() => handleLogOut()}
             variant="outlined"
           >
             Logout
@@ -215,13 +258,13 @@ export default function HomePage() {
                     sx={{ width: "100%" }}
                     onChange={handleChange}
                     TabIndicatorProps={{
-                      style: { background: Colors.MAIN_COLOR, height: 5 },
+                      style: { height: 0 }, // background: Colors.MAIN_COLOR, 
                     }}
-                    inkBarStyle={{ background: "blue" }}
                     textColor="inherit"
                   >
                     {SubjectList.map((obj, i) => (
                       <Tab
+                      key={i}
                         sx={{
                           color: "#000",
                           textTransform: "none",
@@ -252,7 +295,7 @@ export default function HomePage() {
                 />
 
                 {SubjectList.map((obj, i) => (
-                  <TabPanel value={i}>
+                  <TabPanel value={i} key={i}>
                     <div
                       style={{
                         display: "flex",
@@ -353,22 +396,16 @@ export default function HomePage() {
           </div>
 
           <div
-            style={{
-              width: "25vw",
-              display: "flex",
-              flexDirection: "column",
-              backgroundColor: Colors.BACKGROUND_COLOR,
-              margin: "10px",
-            }}
+           style={{ width: "25vw", display: "flex", flexDirection: "column", backgroundColor: Colors.BACKGROUND_COLOR, margin: "10px", }}
           >
-            <div style={{ display: "flex", alignItems:'center' ,justifyContent: "space-around", padding:'32px 0'  }}>
+           <div style={{ display: "flex", alignItems:'center' ,justifyContent: "space-around", padding:'32px 0' }}>
               <Typography variant="h4">Time Left</Typography>
               <Typography
                 variant="h4"
                 sx={{ color: Colors.MAIN_COLOR, fontWeight: "bold" }}
               >
-                {" "}
-                 {minutes} :{seconds}{" "}
+               {/* {" "} {minutes} : {seconds}{" "} */}
+               {" 00 "}  : {" 00 "}
               </Typography>
             </div>
 
@@ -484,6 +521,7 @@ export default function HomePage() {
             >
               {data.map((obj, i) => (
                 <Box
+                key={i}
                   sx={{
                     width: "30px",
                     height: "30px",
@@ -496,7 +534,7 @@ export default function HomePage() {
                     fontWeight: "bold",
                     cursor: "pointer",
                   }}
-                  onClick={() => handleQuestionChange(i)}
+                  onClick={() => setposition(i)}
                 >
                   {i + 1}
                 </Box>
