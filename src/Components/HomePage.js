@@ -6,6 +6,7 @@ import {
   Typography,
   Tabs,
   Radio,
+  Stack,
   RadioGroup,
   FormControlLabel,
 } from "@mui/material";
@@ -21,12 +22,29 @@ import { Colors } from "../constants";
 import Swal from "sweetalert2";
 
 import JSONData from "../constants/JSONData";
+import AppBarHead from "./AppBarHead";
 
 const RootDiv = styled("div")(({ theme }) => ({
-  backgroundColor: Colors.LIGHT_COLOR,
   display: "flex",
   flexDirection: "column",
   height: "95vh",
+  backgroundColor: Colors.LIGHT_COLOR,
+}));
+
+const LeftPart = styled("div")(({ theme }) => ({
+  width: "75vw",
+  backgroundColor: Colors.BACKGROUND_COLOR,
+  margin: "10px",
+  display: "flex",
+  flexDirection: "column",
+}));
+
+const RightPart = styled("div")(({ theme }) => ({
+  width: "25vw",
+  display: "flex",
+  flexDirection: "column",
+  backgroundColor: Colors.BACKGROUND_COLOR,
+  margin: "10px",
 }));
 
 export default function HomePage() {
@@ -34,6 +52,26 @@ export default function HomePage() {
   const location = useLocation();
 
   const [countDown, setCountDown] = useState(0);
+
+  const AnswerIndications = [
+    {
+      color: Colors.ANSWERED_COLOR,
+      name: "Answered",
+    },
+    {
+      color: Colors.NOT_ANSWERED_COLOR,
+      name: "Not Answered",
+    },
+    {
+      color: Colors.MARKED_COLOR,
+      name: "Marked",
+    },
+    {
+      color: Colors.NOT_VISITED_COLOR,
+      name: "Not Visited",
+    },
+  ];
+
   const seconds = String(countDown % 60).padStart(2, 0);
   const minutes = String(Math.floor(countDown / 60)).padStart(2, 0);
 
@@ -51,11 +89,7 @@ export default function HomePage() {
 
   const handleRadioChange = (event) => {
     setValue(event.target.value);
-    console.log(event.target.value ,  'xxxxxxx');
-  };
-
-  const handleQuestionChange = (i) => {
-    setposition(i);
+    console.log(event.target.value, "xxxxxxx");
   };
 
   const correctAnswer = data[position][`ans`];
@@ -63,13 +97,6 @@ export default function HomePage() {
   const scoreAdd = () => {
     value === correctAnswer ? setscore(score + 1) : setscore(score + 0);
   };
-
-  useEffect(() => {
-    if (position === data.length) {
-      setposition(0);
-      alert("You visit all the stuff");
-    }
-  }, [position]);
 
   const handleChange = (event, newTabValue) => {
     setTabValue(newTabValue);
@@ -91,28 +118,6 @@ export default function HomePage() {
         setData(JSONData.MATHS);
     }
   };
-
-
-  // logout:
-  const handleLogOut = () => {
-    Swal.fire({
-      title: 'Log Out',
-      text: "Are you sure you want to logout?",
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, Logout.'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire(
-          'Logout',
-          'Logout successfully',
-          'success'
-        )
-        navigate(-1)
-      }
-    })
-  }
 
   const QNA = data;
   const [Analytics, setAnalytics] = useState(autoGen(QNA.length));
@@ -151,91 +156,68 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-
-    console.log('Home Page Data : ');
+    console.log("Home Page Data : ");
     console.table(location.state);
   }, []);
 
   // For Timer:
 
-  // useEffect(() => {
-  //   if (countDown < 0) {
-  //     alert("expired");
-  //     navigate(-1)
-  //     setCountDown(0);
-  //   }
-  // }, [countDown]);
+  useEffect(() => {
+    if (countDown === -1) {
+      clearInterval(countDown);
 
+      Swal.fire({
+        title: "Time Out",
+        text: "Your records are stored & auto-submitted",
+        imageUrl:
+          "https://images.unsplash.com/photo-1516534775068-ba3e7458af70?crop=entropy&cs=tinysrgb&fm=jpg&ixlib=rb-1.2.1&q=80&raw_url=true&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170",
+        imageWidth: 400,
+        imageHeight: 200,
+        imageAlt: "TimeOutPic",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/submitted", { state: location.state });
+        }
+      });
 
-  // useEffect(() => {
-  //   let timerId;
-  //     setCountDown(60 * 30);
-  //     timerId = setInterval(() => {
-  //       setCountDown((countDown) => countDown - 1);
-  //     }, 1000);
-   
-  //   return () => clearInterval(timerId);
-  // }, []);
+      setCountDown(0);
+    }
+  }, [countDown]);
 
+  useEffect(() => {
+    let timerId;
+    setCountDown(60 * 30);
+    timerId = setInterval(() => {
+      setCountDown((countDown) => countDown - 1);
+    }, 1000);
 
-
+    return () => clearInterval(timerId);
+  }, []);
 
   // refresh:
 
-  // useEffect(() => {
-  //   window.addEventListener("beforeunload", alertUser);
-  //   return () => {
-  //     window.removeEventListener("beforeunload", alertUser);
-  //   };
-  // }, []);
+  useEffect(() => {
+    window.addEventListener("beforeunload", alertUser);
+    return () => {
+      window.removeEventListener("beforeunload", alertUser);
+    };
+  }, []);
 
-  // const alertUser = (e) => {
-  //   e.preventDefault();
-  //   e.returnValue = "";
-  //   navigate(-1)
-  // };
+  const alertUser = (e) => {
+    e.preventDefault();
+    e.returnValue = "";
+    navigate(-1);
+  };
 
-  
   return (
     <div>
-      <AppBar position="sticky" sx={{ height: "5vh" }}>
-        <Toolbar sx={{ backgroundColor: Colors.MAIN_COLOR, height: "5vh" }}>
-          <Typography variant="h5" sx={{ flex: 1 }}>
-            Assessment Tool
-          </Typography>
-          <Typography variant="h6"> Hi {location.state.username} </Typography>
-          <Divider
-            orientation="vertical"
-            sx={{ margin: "10px", backgroundColor: "#fff", width: "3px" }}
-          />
-          <Button
-            sx={{
-              color: "#fff",
-              margin: "0 5px",
-              padding: "5px",
-              border: "1px solid #fff",
-              "&:hover": { border: "1px solid #fff" },
-            }}
-            onClick={() => handleLogOut()}
-            variant="outlined"
-          >
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
+      <AppBarHead userData={location.state} />
 
+      {/* RootDiv */}
       <RootDiv>
-        {/* toolHeader */}
+        {/* SubRootDiv */}
         <div style={{ display: "flex", marginTop: 20, height: "100%" }}>
-          <div
-            style={{
-              width: "75vw",
-              backgroundColor: Colors.BACKGROUND_COLOR,
-              margin: "10px",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
+          <LeftPart>
             <Typography
               variant="h6"
               sx={{ padding: "10px", color: Colors.MAIN_COLOR }}
@@ -258,13 +240,13 @@ export default function HomePage() {
                     sx={{ width: "100%" }}
                     onChange={handleChange}
                     TabIndicatorProps={{
-                      style: { height: 0 }, // background: Colors.MAIN_COLOR, 
+                      style: { height: 0 }, // background: Colors.MAIN_COLOR,
                     }}
-                    textColor="inherit"
+                    // textColor="inherit"
                   >
                     {SubjectList.map((obj, i) => (
                       <Tab
-                      key={i}
+                        key={i}
                         sx={{
                           color: "#000",
                           textTransform: "none",
@@ -296,22 +278,14 @@ export default function HomePage() {
 
                 {SubjectList.map((obj, i) => (
                   <TabPanel value={i} key={i}>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        width: "100%",
-                      }}
-                    >
+                    <Stack>
                       <RadioGroup
                         aria-labelledby="demo-error-radios"
                         name="quiz"
                         value={value}
                         onChange={handleRadioChange}
                       >
-                        <div
-                          style={{ display: "flex", flexDirection: "column" }}
-                        >
+                        <Stack gap={2}>
                           <Typography>
                             {data[position][`qn${position + 1}`]}
                           </Typography>
@@ -335,25 +309,31 @@ export default function HomePage() {
                             control={<Radio />}
                             label={data[position].opt4}
                           />
-                        </div>
+                        </Stack>
                       </RadioGroup>
-                    </div>
+                    </Stack>
                   </TabPanel>
                 ))}
               </TabContext>
             </Box>
 
-            <div
+            {/* <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 paddingTop: 50,
                 backgroundColor: Colors.LIGHT_COLOR,
-                width: "100%",
                 marginTop: "auto",
               }}
+            > */}
+            <Stack
+              justifyContent="space-between"
+              pt={6}
+              mt={"auto"}
+              direction="row"
+              sx={{ backgroundColor: Colors.LIGHT_COLOR }}
             >
-              <div>
+              <Stack direction={"row"}>
                 <Button
                   variant="contained"
                   sx={{
@@ -376,7 +356,7 @@ export default function HomePage() {
                 >
                   Clear Response
                 </Button>
-              </div>
+              </Stack>
 
               <Button
                 variant="contained"
@@ -392,22 +372,33 @@ export default function HomePage() {
               >
                 Save & Exit
               </Button>
-            </div>
-          </div>
+            </Stack>
+          </LeftPart>
 
-          <div
-           style={{ width: "25vw", display: "flex", flexDirection: "column", backgroundColor: Colors.BACKGROUND_COLOR, margin: "10px", }}
-          >
-           <div style={{ display: "flex", alignItems:'center' ,justifyContent: "space-around", padding:'32px 0' }}>
+          <RightPart>
+            <Stack
+              alignItems={"center"}
+              justifyContent="space-around"
+              direction={"row"}
+              py={2}
+            >
+              {/* style={{ display: "flex", alignItems:'center' ,justifyContent: "space-around", padding:'15px 0' , }} 
+             
+             py -> top / bottom
+             px -> left / right
+             */}
               <Typography variant="h4">Time Left</Typography>
               <Typography
                 variant="h4"
-                sx={{ color: Colors.MAIN_COLOR, fontWeight: "bold" }}
+                sx={{
+                  color: countDown <= 30 ? Colors.BTN_COLOR : Colors.MAIN_COLOR,
+                  fontWeight: "bold",
+                }}
               >
-               {/* {" "} {minutes} : {seconds}{" "} */}
-               {" 00 "}  : {" 00 "}
+                {minutes} : {seconds}
+                {/* {" 00 "}  : {" 00 "} */}
               </Typography>
-            </div>
+            </Stack>
 
             <Divider
               sx={{
@@ -415,95 +406,55 @@ export default function HomePage() {
                 backgroundColor: Colors.LIGHT_COLOR,
               }}
             />
-
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 padding: "10px",
+                flexWrap: "wrap",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  width: "200px",
-                }}
-              >
-                <Box
-                  sx={{
-                    width: "30px",
-                    height: "30px",
-                    backgroundColor: Colors.ANSWERED_COLOR,
-                    border: "1px solid #000",
-                    margin: "5px",
-                  }}
-                />
-                <Typography> Answered </Typography>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  width: "200px",
-                }}
-              >
-                <Box
-                  sx={{
-                    width: "30px",
-                    height: "30px",
-                    backgroundColor: Colors.NOT_ANSWERED_COLOR,
-                    border: "1px solid #000",
-                    margin: "5px",
-                  }}
-                />
-                <Typography> Not Answered </Typography>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "10px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  width: "200px",
-                }}
-              >
-                <Box
-                  sx={{
-                    width: "30px",
-                    height: "30px",
-                    backgroundColor: Colors.MARKED_COLOR,
-                    border: "1px solid #000",
-                    margin: "5px",
-                  }}
-                />
-                <Typography> Marked </Typography>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  width: "200px",
-                }}
-              >
-                <Box
-                  sx={{
-                    width: "30px",
-                    height: "30px",
-                    backgroundColor: Colors.NOT_VISITED_COLOR,
-                    border: "1px solid #000",
-                    margin: "5px",
-                  }}
-                />
-                <Typography> Not Visited </Typography>
-              </div>
+              {AnswerIndications.map((obj, i) =>
+                i < 2 ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "200px",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: "30px",
+                        height: "30px",
+                        backgroundColor: obj.color,
+                        border: "1px solid #000",
+                        margin: "5px",
+                      }}
+                    />
+                    <Typography> {obj.name} </Typography>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "200px",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: "30px",
+                        height: "30px",
+                        backgroundColor: obj.color,
+                        border: "1px solid #000",
+                        margin: "5px",
+                      }}
+                    />
+                    <Typography> {obj.name} </Typography>
+                  </div>
+                )
+              )}
             </div>
 
             <Typography variant="h6" sx={{ padding: "10px" }}>
@@ -521,7 +472,7 @@ export default function HomePage() {
             >
               {data.map((obj, i) => (
                 <Box
-                key={i}
+                  key={i}
                   sx={{
                     width: "30px",
                     height: "30px",
@@ -602,7 +553,7 @@ export default function HomePage() {
                 Submit
               </Button>
             </Box>
-          </div>
+          </RightPart>
         </div>
       </RootDiv>
     </div>
