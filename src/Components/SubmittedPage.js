@@ -9,8 +9,10 @@ import {
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { Colors } from "../constants";
+import { APIClient, Colors } from "../constants";
 import { styled } from "@mui/system";
+import { Base64 } from "js-base64";
+import AppBarHead from "./AppBarHead";
 
 const RootDiv = styled("div")(({ theme }) => ({
   backgroundColor: Colors.LIGHT_COLOR,
@@ -22,6 +24,8 @@ const RootDiv = styled("div")(({ theme }) => ({
 export default function DeleteNow() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [UserLog, setUserLog] = useState({})
 
   // logout:
   const handleLogOut = () => {
@@ -40,35 +44,25 @@ export default function DeleteNow() {
     });
   };
 
-  useEffect(() => {}, [location.state]);
+
+  const handleBackToHome = () => {
+    localStorage.setItem(APIClient.LOCALSTORAGE_KEY , '')
+    navigate(-2)
+  }
+
+  useEffect(() => {
+
+    var data = localStorage.getItem(APIClient.LOCALSTORAGE_KEY)
+    var decode = Base64.decode(data)
+
+    setUserLog(JSON.parse(decode))
+
+  }, []);
+  
 
   return (
     <div>
-      <AppBar position="sticky" sx={{ height: "5vh" }}>
-        <Toolbar sx={{ backgroundColor: Colors.MAIN_COLOR, height: "5vh" }}>
-          <Typography variant="h5" sx={{ flex: 1 }}>
-            Assessment Tool
-          </Typography>
-          <Typography variant="h6"> Hi {location.state.username} </Typography>
-          <Divider
-            orientation="vertical"
-            sx={{ margin: "10px", backgroundColor: "#fff", width: "3px" }}
-          />
-          <Button
-            sx={{
-              color: "#fff",
-              margin: "0 5px",
-              padding: "5px",
-              border: "1px solid #fff",
-              "&:hover": { border: "1px solid #fff" },
-            }}
-            onClick={() => handleLogOut()}
-            variant="outlined"
-          >
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
+     <AppBarHead userData={UserLog} page='Submitted' />
 
       <RootDiv>
         <div>
@@ -94,7 +88,7 @@ export default function DeleteNow() {
                 backgroundColor: Colors.BTN_COLOR,
                 "&:hover": { backgroundColor: Colors.BTN_COLOR },
               }}
-              onClick={() => navigate(-2)}
+              onClick={() => handleBackToHome()}
             >
               Thank You
             </Button>

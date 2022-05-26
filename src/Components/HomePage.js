@@ -17,12 +17,13 @@ import TabPanel from "@mui/lab/TabPanel";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Colors } from "../constants";
+import { APIClient, Colors } from "../constants";
 
 import Swal from "sweetalert2";
 
 import JSONData from "../constants/JSONData";
 import AppBarHead from "./AppBarHead";
+import { Base64 } from "js-base64";
 
 const RootDiv = styled("div")(({ theme }) => ({
   display: "flex",
@@ -77,9 +78,13 @@ export default function HomePage() {
 
   const [data, setData] = useState(JSONData.MATHS);
 
+  const [UserLog, setUserLog] = useState({});
+
   const [TabValue, setTabValue] = useState(0);
 
-  const SubjectList = ["Maths", "Physics", "Chemistry", "Computer Science"];
+  const SubjectList = Object.keys(JSONData)
+
+  const [switchTabsCount, setSwitchTabsCount] = useState(0)
 
   const [value, setValue] = useState("");
 
@@ -98,25 +103,23 @@ export default function HomePage() {
     value === correctAnswer ? setscore(score + 1) : setscore(score + 0);
   };
 
+  const [showQuestionPaper, setShowQuestionPaper] = useState(false);
+
+  const ButtonList = ["Questions Paper", "Instructions", "Profile", "Submit"];
+
+  const handleBtns = (obj) => {
+    console.log(obj);
+
+    if (obj === "Questions Paper") {
+      setShowQuestionPaper(true);
+    }
+  };
+
   const handleChange = (event, newTabValue) => {
     setTabValue(newTabValue);
 
-    switch (newTabValue) {
-      case 0:
-        setData(JSONData.MATHS);
-        break;
-      case 1:
-        setData(JSONData.PHYSICS);
-        break;
-      case 2:
-        setData(JSONData.CHEMISTRY);
-        break;
-      case 3:
-        setData(JSONData.COMPUTER_SCIENCE);
-        break;
-      default:
-        setData(JSONData.MATHS);
-    }
+    setData(JSONData[SubjectList[newTabValue]])
+
   };
 
   const QNA = data;
@@ -155,9 +158,41 @@ export default function HomePage() {
     return arr;
   }
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  const handleSubmitBtn = () => {
+    Swal.fire({
+      title: "Do you want to submit the test?",
+      showCancelButton: true,
+      confirmButtonText: "Submit",
+      confirmButtonColor: Colors.MAIN_COLOR,
+    }).then((result) => {
+      /* Read more about isConfirmed, isDenied below */
+      if (result.isConfirmed) {
+        Swal.fire({
+          icon: "success",
+          title: "Submitted!",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        sleep(1500).then(() => navigate("/submitted"));
+      }
+    });
+  };
+
   useEffect(() => {
-    console.log("Home Page Data : ");
-    console.table(location.state);
+    console.log("*************-Home Page Data-*************");
+
+    var data = localStorage.getItem(APIClient.LOCALSTORAGE_KEY);
+
+    if (data === "") {
+      navigate("/");
+    } else {
+      var decode = Base64.decode(data);
+      setUserLog(JSON.parse(decode));
+    }
   }, []);
 
   // For Timer:
@@ -176,7 +211,7 @@ export default function HomePage() {
         imageAlt: "TimeOutPic",
       }).then((result) => {
         if (result.isConfirmed) {
-          navigate("/submitted", { state: location.state });
+          navigate("/submitted", { state: "location.state" });
         }
       });
 
@@ -203,6 +238,15 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    document.addEventListener("visibilitychange", function () {
+      document.hidden
+        ? setSwitchTabsCount(switchTabsCount + 1)
+        : setSwitchTabsCount(switchTabsCount);
+    });
+  }, [switchTabsCount]) 
+  
+
   const alertUser = (e) => {
     e.preventDefault();
     e.returnValue = "";
@@ -211,7 +255,7 @@ export default function HomePage() {
 
   return (
     <div>
-      <AppBarHead userData={location.state} />
+      <AppBarHead userData={UserLog} page="Home" />
 
       {/* RootDiv */}
       <RootDiv>
@@ -263,57 +307,95 @@ export default function HomePage() {
                   sx={{ height: 5, backgroundColor: Colors.LIGHT_COLOR }}
                 />
 
-                <Typography variant="h6" sx={{ padding: "10px" }}>
-                  {" "}
-                  {`Question  ${position + 1}`}
-                </Typography>
+                {!showQuestionPaper ? (
+                  <Box>
+                    <Typography variant="h6" sx={{ padding: "10px" }}>
+                      {`Question  ${position + 1}`}
+                    </Typography>
 
-                <Divider
-                  sx={{
-                    height: 2,
-                    backgroundColor: Colors.LIGHT_COLOR,
-                    margin: "0 1%",
-                  }}
-                />
+                    <Divider
+                      sx={{
+                        height: 2,
+                        backgroundColor: Colors.LIGHT_COLOR,
+                        margin: "0 1%",
+                      }}
+                    />
 
-                {SubjectList.map((obj, i) => (
-                  <TabPanel value={i} key={i}>
-                    <Stack>
-                      <RadioGroup
-                        aria-labelledby="demo-error-radios"
-                        name="quiz"
-                        value={value}
-                        onChange={handleRadioChange}
-                      >
-                        <Stack gap={2}>
-                          <Typography>
-                            {data[position][`qn${position + 1}`]}
-                          </Typography>
-                          <FormControlLabel
-                            value={data[position].opt1}
-                            control={<Radio />}
-                            label={data[position].opt1}
-                          />
-                          <FormControlLabel
-                            value={data[position].opt2}
-                            control={<Radio />}
-                            label={data[position].opt2}
-                          />
-                          <FormControlLabel
-                            value={data[position].opt3}
-                            control={<Radio />}
-                            label={data[position].opt3}
-                          />
-                          <FormControlLabel
-                            value={data[position].opt4}
-                            control={<Radio />}
-                            label={data[position].opt4}
-                          />
+                    {SubjectList.map((obj, i) => (
+                      <TabPanel value={i} key={i}>
+                        <Stack>
+                          <RadioGroup
+                            aria-labelledby="demo-error-radios"
+                            name="quiz"
+                            value={value}
+                            onChange={handleRadioChange}
+                          >
+                            <Stack gap={2}>
+                              <Typography>
+                                {data[position][`qn${position + 1}`]}
+                              </Typography>
+                              <FormControlLabel
+                                value={data[position].opt1}
+                                control={<Radio />}
+                                label={data[position].opt1}
+                              />
+                              <FormControlLabel
+                                value={data[position].opt2}
+                                control={<Radio />}
+                                label={data[position].opt2}
+                              />
+                              <FormControlLabel
+                                value={data[position].opt3}
+                                control={<Radio />}
+                                label={data[position].opt3}
+                              />
+                              <FormControlLabel
+                                value={data[position].opt4}
+                                control={<Radio />}
+                                label={data[position].opt4}
+                              />
+                            </Stack>
+                          </RadioGroup>
                         </Stack>
-                      </RadioGroup>
-                    </Stack>
-                  </TabPanel>
-                ))}
+                      </TabPanel>
+                    ))}
+                  </Box>
+                ) : (
+                  <Box
+                    style={{
+                      padding: "20px 0 20px 20px",
+                    }}
+                  >
+                    <Box style={{ overflowY: "scroll", maxHeight: "46.4vh" }}>
+                      {data.map((text, index) => (
+                        <Typography>
+                          {index + 1}.{text[`qn${index + 1}`]}{" "}
+                          <Divider style={{ margin: "10px 0" }} />
+                        </Typography>
+                      ))}
+                    </Box>
+                    <div
+                      style={{
+                        display: "flex",
+                        width: "98%",
+                        justifyContent: "center",
+                        marginTop: "3px",
+                      }}
+                    >
+                      <Button
+                        size="small"
+                        style={{
+                          backgroundColor: Colors.MAIN_COLOR,
+                          color: "white",
+                          textTransform: "none",
+                        }}
+                        onClick={() => setShowQuestionPaper(false)}
+                      >
+                        Back
+                      </Button>
+                    </div>
+                  </Box>
+                )}
               </TabContext>
             </Box>
 
@@ -492,67 +574,50 @@ export default function HomePage() {
               ))}
             </Box>
 
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: Colors.NOT_VISITED_COLOR,
-                  width: "200px",
-                  margin: "10px",
-                  whiteSpace: "nowrap",
-                  color: "#000",
-                  border: "1px solid #000",
-                  "&:hover": { backgroundColor: Colors.NOT_VISITED_COLOR },
-                }}
-              >
-                Questions Paper
-              </Button>
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: Colors.NOT_VISITED_COLOR,
-                  width: "200px",
-                  margin: "10px",
-                  whiteSpace: "nowrap",
-                  color: "#000",
-                  border: "1px solid #000",
-                  "&:hover": { backgroundColor: Colors.NOT_VISITED_COLOR },
-                }}
-              >
-                Instructions
-              </Button>
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+              }}
+            >
+              {ButtonList.map((obj, i) => (
+                <Button
+                  key={i}
+                  variant="contained"
+                  sx={{
+                    backgroundColor: Colors.NOT_VISITED_COLOR,
+                    width: "200px",
+                    margin: "10px",
+                    whiteSpace: "nowrap",
+                    color: "#000",
+                    border: "1px solid #000",
+                    "&:hover": { backgroundColor: Colors.NOT_VISITED_COLOR },
+                  }}
+                  onClick={() => handleBtns(obj)}
+                >
+                  {obj}
+                </Button>
+              ))}
             </Box>
 
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: Colors.NOT_VISITED_COLOR,
-                  width: "200px",
-                  margin: "10px",
-                  whiteSpace: "nowrap",
-                  color: "#000",
-                  border: "1px solid #000",
-                  "&:hover": { backgroundColor: Colors.NOT_VISITED_COLOR },
-                }}
-              >
-                Profile
-              </Button>
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: Colors.NOT_VISITED_COLOR,
-                  width: "200px",
-                  margin: "10px",
-                  whiteSpace: "nowrap",
-                  color: "#000",
-                  border: "1px solid #000",
-                  "&:hover": { backgroundColor: Colors.NOT_VISITED_COLOR },
-                }}
-              >
-                Submit
-              </Button>
-            </Box>
+
+            <div
+              style={{
+                padding: "0 10px",
+                display: switchTabsCount == 0 ? "none" : "flex",
+              }}
+            >
+              <Typography variant="body2">
+                {" "}
+                You have Switched to another tab{" "}
+                <span style={{ color: "red", fontWeight: "bold" }}>
+                  {switchTabsCount}
+                </span>{" "}
+                times
+              </Typography>
+            </div>
+
           </RightPart>
         </div>
       </RootDiv>

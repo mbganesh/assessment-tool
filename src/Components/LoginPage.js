@@ -5,8 +5,9 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import IconButton from "@mui/material/IconButton";
-import { Colors } from "../constants";
+import { APIClient, Colors } from "../constants";
 import { useNavigate } from "react-router-dom";
+import { Base64 } from "js-base64";
 
 const RootDiv = styled("div")(({ theme }) => ({
   backgroundColor: Colors.LIGHT_COLOR,
@@ -45,6 +46,12 @@ export default function LoginPage() {
     }
   };
 
+  const handleLocalStorage = (data) => {
+    var dataStr = JSON.stringify(data)
+    var encode = Base64.encode(dataStr)
+    localStorage.setItem(APIClient.LOCALSTORAGE_KEY , encode)
+  }
+
   const handleLoginBtn = () => {
 
     console.log(LoginData);
@@ -53,7 +60,12 @@ export default function LoginPage() {
       }else if(LoginData.password === ''){
           alert('please enter password')
       }else if(LoginData.password === '123'){
-        navigate('/home' , {state:LoginData})
+
+
+        handleLocalStorage(LoginData)
+        
+
+        navigate('/home')
       }else{
         alert('incorrect username or password')
       }

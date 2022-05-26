@@ -1,15 +1,12 @@
 import React from 'react'
 import { AppBar , Toolbar , Typography , Button , Divider } from '@mui/material'
-import {Colors} from '../constants'
+import {APIClient, Colors} from '../constants'
 import Swal from 'sweetalert2'
 import { useNavigate } from 'react-router-dom'
 
-export default function AppBarHead({userData}) {
+export default function AppBarHead({userData , page}) {
 
     const navigate = useNavigate()
-
-    
-    console.log(userData);
 
   // logout:
   const handleLogOut = () => {
@@ -27,7 +24,16 @@ export default function AppBarHead({userData}) {
           'Logout successfully',
           'success'
         )
-        navigate(-1)
+
+        localStorage.setItem(APIClient.LOCALSTORAGE_KEY , '')
+
+        if(page === 'Home'){
+          navigate(-1)
+        }else{
+          navigate(-2)
+        }
+
+        
       }
     })
   }
