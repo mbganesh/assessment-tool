@@ -35,30 +35,44 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const dayAndTimeChecker = () => {
-    let current =moment().format("YYYY-MM-DD HH:mm"); // current time
-    let examDayTime = "2022-05-27 17:06";
+    let isCurrectTime = false;
+    let errorMessage = ""
+    let current = moment().format("YYYY-MM-DD HH:mm"); // current time
+    let examDayTime = "2022-05-30 17:00";
 
+    let graceTime = moment(examDayTime, "YYYY-MM-DD HH:mm")
+      .add(15, "minute")
+      .format("YYYY-MM-DD HH:mm"); // grace time
 
-    let graceTime =moment(examDayTime,"YYYY-MM-DD HH:mm").add(15,'minute').format("YYYY-MM-DD HH:mm"); // grace time
-    
-
-    console.log('Current Time : ',current,'\n' , 'Exam Time: ' , examDayTime , '\n' , 'Grace Time: ' , graceTime  );
+    console.log(
+      "Current Time : ",
+      current,
+      "\n",
+      "Exam Time: ",
+      examDayTime,
+      "\n",
+      "Grace Time: ",
+      graceTime
+    );
 
     if (moment(current).isSameOrAfter(examDayTime)) {
-
-      if(moment(current).isSameOrBefore(graceTime) ){  //  time check
-          console.log('grace time');
-
-      }else{
-        console.log('exam link expired');
+      if (moment(current).isSameOrBefore(graceTime)) {
+        //  time check
+        console.log("grace time");
+        errorMessage = ""
+        isCurrectTime = true;
+      } else {
+        errorMessage="Exam Link Expired"
+        console.log("exam link expired");
+        isCurrectTime = false;
       }
-
-
     } else {
+      errorMessage = "Exam is not started yet"
       console.log("Exam is not started yet");
+      isCurrectTime = false;
     }
 
-
+    return {time:isCurrectTime , message:errorMessage};
   };
 
   const [LoginData, setLoginData] = useState({
@@ -89,6 +103,13 @@ export default function LoginPage() {
     } else if (LoginData.password === "123") {
       // handleLocalStorage(LoginData)
       // navigate('/home')
+      
+      if(dayAndTimeChecker().time){
+        handleLocalStorage(LoginData)
+      navigate('/home')
+      }else{
+        alert(dayAndTimeChecker().message);  
+      }
     } else {
       alert("incorrect username or password");
     }
