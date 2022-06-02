@@ -9,6 +9,8 @@ import { APIClient, Colors } from "../constants";
 import { useNavigate } from "react-router-dom";
 import { Base64 } from "js-base64";
 import moment from "moment";
+import axios from "axios";
+import useStateRef from "react-usestateref";
 
 const RootDiv = styled("div")(({ theme }) => ({
   backgroundColor: Colors.LIGHT_COLOR,
@@ -32,15 +34,18 @@ const RootCard = (theme) => ({
 export default function LoginPage() {
   const navigate = useNavigate();
 
+  const [examDayTime, setExamDayTime , examDayTimeRef] = useStateRef('')
+  const [responseObj , setResponseObj , responseObjRef] = useStateRef({})
   const [showPassword, setShowPassword] = useState(false);
 
   const dayAndTimeChecker = () => {
     let isCurrectTime = false;
     let errorMessage = ""
-    let current = moment().format("YYYY-MM-DD HH:mm"); // current time
-    let examDayTime = "2022-05-30 17:00";
+    let current = moment().utc().format("YYYY-MM-DD HH:mm"); // current time
+   
 
-    let graceTime = moment(examDayTime, "YYYY-MM-DD HH:mm")
+
+    let graceTime = moment(examDayTimeRef.current, "YYYY-MM-DD HH:mm")
       .add(15, "minute")
       .format("YYYY-MM-DD HH:mm"); // grace time
 
@@ -49,13 +54,13 @@ export default function LoginPage() {
       current,
       "\n",
       "Exam Time: ",
-      examDayTime,
+      examDayTimeRef.current,
       "\n",
       "Grace Time: ",
       graceTime
     );
 
-    if (moment(current).isSameOrAfter(examDayTime)) {
+    if (moment(current).isSameOrAfter(examDayTimeRef.current)) {
       if (moment(current).isSameOrBefore(graceTime)) {
         //  time check
         console.log("grace time");
@@ -67,7 +72,7 @@ export default function LoginPage() {
         isCurrectTime = false;
       }
     } else {
-      errorMessage = "Exam is not started yet"
+      errorMessage = "Exam is not started Please wait."
       console.log("Exam is not started yet");
       isCurrectTime = false;
     }
@@ -93,26 +98,53 @@ export default function LoginPage() {
   };
 
   const handleLoginBtn = () => {
-    dayAndTimeChecker();
 
-    console.log(LoginData);
+    //  New Stuff:
+    if(LoginData.username !== '' && LoginData.password !== ''){
+
+      var dataToSend = {
+        "user": "admin",
+        "name": LoginData.username,
+        "password":LoginData.passwordg
+      }
+
+      axios.post(APIClient.API_BASE_URL ,dataToSend ).then(res => {
+
+        setResponseObj(res.data)
+  
+        console.log(responseObjRef.current);
+
+        var examTimeRes = moment.utc(responseObjRef.current.dateTimeToStartExam).format('YYYY-MM-DD HH:mm');
+        setExamDayTime(examTimeRes)
+
+        // handleTimer:
+        
+    var timeValider = dayAndTimeChecker()
     if (LoginData.username === "") {
       alert("please enter username");
     } else if (LoginData.password === "") {
       alert("please enter password");
-    } else if (LoginData.password === "123") {
+    } else if (LoginData.password !== "") {
       // handleLocalStorage(LoginData)
       // navigate('/home')
       
-      if(dayAndTimeChecker().time){
+      if(timeValider.time){
         handleLocalStorage(LoginData)
-      navigate('/home')
+      navigate('/home' , {state:responseObjRef.current})
       }else{
-        alert(dayAndTimeChecker().message);  
+        alert(timeValider.message);  
       }
     } else {
       alert("incorrect username or password");
     }
+      });
+      
+    }else{
+      alert("Fields Can`t be Empty");
+    }
+
+
+ 
   };
 
   return (

@@ -1,8 +1,6 @@
 import {
-  AppBar,
   Button,
   Divider,
-  Toolbar,
   Typography,
   Tabs,
   Radio,
@@ -94,7 +92,7 @@ export default function HomePage() {
 
   const handleRadioChange = (event) => {
     setValue(event.target.value);
-    console.log(event.target.value, "xxxxxxx");
+    console.log(event.target.value, "--------------");
   };
 
   const correctAnswer = data[position][`ans`];
@@ -184,6 +182,8 @@ export default function HomePage() {
 
   useEffect(() => {
     console.log("*************-Home Page Data-*************");
+
+    console.log(location.state);
 
     var data = localStorage.getItem(APIClient.LOCALSTORAGE_KEY);
 
