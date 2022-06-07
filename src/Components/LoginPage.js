@@ -43,8 +43,6 @@ export default function LoginPage() {
     let errorMessage = ""
     let current = moment().utc().format("YYYY-MM-DD HH:mm"); // current time
    
-
-
     let graceTime = moment(examDayTimeRef.current, "YYYY-MM-DD HH:mm")
       .add(15, "minute")
       .format("YYYY-MM-DD HH:mm"); // grace time
@@ -105,8 +103,9 @@ export default function LoginPage() {
       var dataToSend = {
         "user": "admin",
         "name": LoginData.username,
-        "password":LoginData.passwordg
+        "password":LoginData.password
       }
+
 
       axios.post(APIClient.API_BASE_URL ,dataToSend ).then(res => {
 

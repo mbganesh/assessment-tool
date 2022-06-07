@@ -22,6 +22,7 @@ import Swal from "sweetalert2";
 import JSONData from "../constants/JSONData";
 import AppBarHead from "./AppBarHead";
 import { Base64 } from "js-base64";
+import useStateRef from "react-usestateref";
 
 const RootDiv = styled("div")(({ theme }) => ({
   display: "flex",
@@ -52,7 +53,7 @@ export default function HomePage() {
 
   const [countDown, setCountDown] = useState(0);
 
-  const AnswerIndications = [
+  const BtnColorIndications = [
     {
       color: Colors.ANSWERED_COLOR,
       name: "Answered",
@@ -71,18 +72,24 @@ export default function HomePage() {
     },
   ];
 
+  const [answered, setAnswered] = useState([]);
+
   const seconds = String(countDown % 60).padStart(2, 0);
   const minutes = String(Math.floor(countDown / 60)).padStart(2, 0);
 
+  // allSubject as full subject data
+  const [subjectData, setSubjectData, subjectDataRef] = useStateRef({});
+
+  // data as single subject
   const [data, setData] = useState(JSONData.MATHS);
 
   const [UserLog, setUserLog] = useState({});
 
   const [TabValue, setTabValue] = useState(0);
 
-  const SubjectList = Object.keys(JSONData)
+  const SubjectList = Object.keys(JSONData);
 
-  const [switchTabsCount, setSwitchTabsCount] = useState(0)
+  const [switchTabsCount, setSwitchTabsCount] = useState(0);
 
   const [value, setValue] = useState("");
 
@@ -90,9 +97,18 @@ export default function HomePage() {
 
   const [score, setscore] = useState(0);
 
-  const handleRadioChange = (event) => {
+  const handleRadioChange = (obj, event, pos) => {
     setValue(event.target.value);
-    console.log(event.target.value, "--------------");
+    setMyStore({
+      ...myStoreRef.current,
+      [obj]: { ...myStoreRef.current[obj], [pos]: event.target.value },
+    });
+
+    pushAnsweredQns();
+  };
+
+  const pushAnsweredQns = () => {
+    setAnswered((answered) => [...answered, position]);
   };
 
   const correctAnswer = data[position][`ans`];
@@ -113,48 +129,26 @@ export default function HomePage() {
     }
   };
 
-  const handleChange = (event, newTabValue) => {
-    setTabValue(newTabValue);
+  const handleClearResponse = () => {
+    
+    const subjectName = Object.keys(JSONData);
+    
+    let currentSubject = subjectName[TabValue]
+    let currentQn = position+1
 
-    setData(JSONData[SubjectList[newTabValue]])
+    setMyStore({
+      ...myStoreRef.current,
+      [currentSubject]: { ...myStoreRef.current[currentSubject], [currentQn]: "" },
+    });
 
   };
 
-  const QNA = data;
-  const [Analytics, setAnalytics] = useState(autoGen(QNA.length));
-  function autoGen(count) {
-    let arr = [];
-    let obj = {
-      isAnswerd: false,
-      isVisited: false,
-      isNotAnswered: false,
-      isMarked: false,
-      viewCount: 0,
-      questionDetails: {},
-    };
-
-    for (let i = 0; i < count; i++) {
-      // Object.assign(obj.questionDetails, QNA[i]);
-      // if (Object.keys(obj.questionDetails).length === 0) {
-      //   Object.assign(obj.questionDetails, QNA[i]);
-      //   break
-      // }
-      if (i === 0) {
-        let obj = {
-          isAnswerd: false,
-          isVisited: true,
-          isNotAnswered: false,
-          isMarked: false,
-          viewCount: 1,
-          questionDetails: {},
-        };
-        arr.push(obj);
-      } else {
-        arr.push(obj);
-      }
-    }
-    return arr;
-  }
+  const handleChange = (event, newTabValue) => {
+    setTabValue(newTabValue);
+    setposition(0);
+    const tabs = Object.keys(JSONData);
+    setData(JSONData[tabs[newTabValue]]);
+  };
 
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -183,7 +177,11 @@ export default function HomePage() {
   useEffect(() => {
     console.log("*************-Home Page Data-*************");
 
-    console.log(location.state);
+    setSubjectData(location.state.questionData);
+
+    // console.log(subjectDataRef.current);
+
+    setData(location.state.questionData.MATHS);
 
     var data = localStorage.getItem(APIClient.LOCALSTORAGE_KEY);
 
@@ -230,7 +228,6 @@ export default function HomePage() {
   }, []);
 
   // refresh:
-
   useEffect(() => {
     window.addEventListener("beforeunload", alertUser);
     return () => {
@@ -244,8 +241,29 @@ export default function HomePage() {
         ? setSwitchTabsCount(switchTabsCount + 1)
         : setSwitchTabsCount(switchTabsCount);
     });
-  }, [switchTabsCount]) 
-  
+  }, [switchTabsCount]);
+
+  const [myStore, setMyStore, myStoreRef] = useStateRef({});
+
+  const [isSelected, setIsSelected] = useState(false);
+
+  useEffect(() => {
+    updateStore();
+    setIsSelected(true);
+  }, []);
+
+  const updateStore = () => {
+    let createKey = Object.keys(JSONData);
+    let tempObj = {};
+    createKey.map(
+      (txt, i) => (
+        (tempObj[txt] = {}),
+        JSONData[txt].map((txT, i) => (tempObj[txt][1 + i] = ""))
+      )
+    );
+
+    setMyStore(tempObj);
+  };
 
   const alertUser = (e) => {
     e.preventDefault();
@@ -328,28 +346,54 @@ export default function HomePage() {
                             aria-labelledby="demo-error-radios"
                             name="quiz"
                             value={value}
-                            onChange={handleRadioChange}
+                            onClick={(event) =>
+                              handleRadioChange(obj, event, position + 1)
+                            }
                           >
                             <Stack gap={2}>
                               <Typography>
                                 {data[position][`qn${position + 1}`]}
                               </Typography>
                               <FormControlLabel
+                                checked={
+                                  !isSelected
+                                    ? false
+                                    : myStoreRef.current[obj][position + 1] ===
+                                      data[position].opt1
+                                }
                                 value={data[position].opt1}
                                 control={<Radio />}
                                 label={data[position].opt1}
                               />
                               <FormControlLabel
+                                checked={
+                                  !isSelected
+                                    ? false
+                                    : myStoreRef.current[obj][position + 1] ===
+                                      data[position].opt2
+                                }
                                 value={data[position].opt2}
                                 control={<Radio />}
                                 label={data[position].opt2}
                               />
                               <FormControlLabel
+                                checked={
+                                  !isSelected
+                                    ? false
+                                    : myStoreRef.current[obj][position + 1] ===
+                                      data[position].opt3
+                                }
                                 value={data[position].opt3}
                                 control={<Radio />}
                                 label={data[position].opt3}
                               />
                               <FormControlLabel
+                                checked={
+                                  !isSelected
+                                    ? false
+                                    : myStoreRef.current[obj][position + 1] ===
+                                      data[position].opt4
+                                }
                                 value={data[position].opt4}
                                 control={<Radio />}
                                 label={data[position].opt4}
@@ -368,7 +412,7 @@ export default function HomePage() {
                   >
                     <Box style={{ overflowY: "scroll", maxHeight: "46.4vh" }}>
                       {data.map((text, index) => (
-                        <Typography>
+                        <Typography key={index}>
                           {index + 1}.{text[`qn${index + 1}`]}{" "}
                           <Divider style={{ margin: "10px 0" }} />
                         </Typography>
@@ -399,15 +443,7 @@ export default function HomePage() {
               </TabContext>
             </Box>
 
-            {/* <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                paddingTop: 50,
-                backgroundColor: Colors.LIGHT_COLOR,
-                marginTop: "auto",
-              }}
-            > */}
+         
             <Stack
               justifyContent="space-between"
               pt={6}
@@ -435,6 +471,7 @@ export default function HomePage() {
                     backgroundColor: "#FBF0F0",
                     "&:hover": { backgroundColor: "#FBF0F0" },
                   }}
+                  onClick={() => handleClearResponse()}
                 >
                   Clear Response
                 </Button>
@@ -452,7 +489,7 @@ export default function HomePage() {
                   scoreAdd();
                 }}
               >
-                Save & Exit
+                Save & Next
               </Button>
             </Stack>
           </LeftPart>
@@ -496,7 +533,7 @@ export default function HomePage() {
                 flexWrap: "wrap",
               }}
             >
-              {AnswerIndications.map((obj, i) =>
+              {BtnColorIndications.map((obj, i) =>
                 i < 2 ? (
                   <div
                     style={{
@@ -601,7 +638,6 @@ export default function HomePage() {
               ))}
             </Box>
 
-
             <div
               style={{
                 padding: "0 10px",
@@ -617,7 +653,6 @@ export default function HomePage() {
                 times
               </Typography>
             </div>
-
           </RightPart>
         </div>
       </RootDiv>
